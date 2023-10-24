@@ -242,7 +242,7 @@ func NewRemote(capabilities Capabilities, urlPrefix string) (WebDriver, error) {
 //
 // Providing an empty string for urlPrefix causes the DefaultURLPrefix to be
 // used.
-func NewRemoteExistingSession(urlPrefix string, browserName, sessionID string) (WebDriver, error) {
+func NewRemoteExistingSession(urlPrefix string, sessionID string) (WebDriver, error) {
 	if urlPrefix == "" {
 		urlPrefix = DefaultURLPrefix
 	}
@@ -251,7 +251,25 @@ func NewRemoteExistingSession(urlPrefix string, browserName, sessionID string) (
 		id:        sessionID,
 		urlPrefix: urlPrefix,
 	}
-	wd.browser = browserName
+	capabilities, err := wd.Capabilities()
+	if err != nil {
+		return nil, err
+	}
+	wd.capabilities = capabilities
+	if b := capabilities["browserName"]; b != nil {
+		wd.browser = b.(string)
+	}
+	for _, s := range []interface{}{capabilities["version"], capabilities["browserVersion"]} {
+		if s == nil || s == "" {
+			continue
+		}
+		v, err := parseVersion(s.(string))
+		if err != nil {
+			debugLog("error parsing version: %v\n", err)
+			continue
+		}
+		wd.browserVersion = v
+	}
 
 	return wd, nil
 }
