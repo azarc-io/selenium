@@ -238,6 +238,42 @@ func NewRemote(capabilities Capabilities, urlPrefix string) (WebDriver, error) {
 	return wd, nil
 }
 
+// NewRemoteExistingSession creates new remote client.
+//
+// Providing an empty string for urlPrefix causes the DefaultURLPrefix to be
+// used.
+func NewRemoteExistingSession(urlPrefix string, sessionID string) (WebDriver, error) {
+	if urlPrefix == "" {
+		urlPrefix = DefaultURLPrefix
+	}
+
+	wd := &remoteWD{
+		id:        sessionID,
+		urlPrefix: urlPrefix,
+	}
+	capabilities, err := wd.Capabilities()
+	if err != nil {
+		return nil, err
+	}
+	wd.capabilities = capabilities
+	if b := capabilities["browserName"]; b != nil {
+		wd.browser = b.(string)
+	}
+	for _, s := range []interface{}{capabilities["version"], capabilities["browserVersion"]} {
+		if s == nil || s == "" {
+			continue
+		}
+		v, err := parseVersion(s.(string))
+		if err != nil {
+			debugLog("error parsing version: %v\n", err)
+			continue
+		}
+		wd.browserVersion = v
+	}
+
+	return wd, nil
+}
+
 // DeleteSession deletes an existing session at the WebDriver instance
 // specified by the urlPrefix and the session ID.
 func DeleteSession(urlPrefix, id string) error {
