@@ -255,6 +255,10 @@ func NewRemoteExistingSession(urlPrefix string, sessionID string) (WebDriver, er
 	if err != nil {
 		return nil, err
 	}
+	if caps, ok := capabilities["capabilities"]; ok {
+		capabilities = caps.(map[string]interface{})
+		wd.w3cCompatible = true
+	}
 	wd.capabilities = capabilities
 	if b := capabilities["browserName"]; b != nil {
 		wd.browser = b.(string)
